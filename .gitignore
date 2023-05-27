@@ -1,52 +1,262 @@
-# Prerequisites
-*.d
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+sbit LED1 at RC0_bit;
+sbit LED2 at RC1_bit;
+sbit LED3 at RC2_bit;
+sbit LED4 at RC3_bit;
+// Constantes para los sonidos
+// Definir constantes para las frecuencias de las notas musicales
+const float DO = 523.0;
+const float RE = 587.0;
+const float MI = 659.0;
+const float FA = 698.0;
+unsigned int sonido;
+// FUNCION DE NOTAS DO
+void reproducir_DO()      {
+            sound_play  (DO,500)   ;                     //
+            LED1 = 1;
+            Delay_ms(500);
+            LED1 = 0;
+ }
 
-# Linker output
-*.ilk
-*.map
-*.exp
+void reproducir_RE()   {
+            sound_play  (RE,500)   ;                     //
+            LED2 = 1;
+            Delay_ms(500);
+            LED2 = 0    ;
+ }
+ 
+void reproducir_MI()    {
+            sound_play  (MI,500)   ;                     //
+            LED3 = 1;
+            Delay_ms(500);
+            LED3 = 0  ;
+}
 
-# Precompiled Headers
-*.gch
-*.pch
+void reproducir_FA()      {
+            sound_play  (FA,500)   ;                     //
+            LED4 = 1;
+            Delay_ms(500);
+            LED4 = 0   ;
+}
+// Función para encender los LEDs uno a uno
+void encenderLEDs() {
+    LED1 = 1;
+    Delay_ms(100);
+    LED2 = 1;
+    Delay_ms(100);
+    LED3 = 1;
+    Delay_ms(100);
+    LED4 = 1;
+    Delay_ms(100);
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+    LED1 = 0;
+    Delay_ms(100);
+    LED2 = 0;
+    Delay_ms(100);
+    LED3 = 0;
+    Delay_ms(100);
+    LED4 = 0;
+    Delay_ms(100);
+}
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+// Función para obtener un sonido aleatorio
+unsigned int obtenerSonidoAleatorio() {                          //VOID
+    srand(TMR0); // Inicializa la semilla aleatoria
+ // Genera un número aleatorio entre 1 y 4
+    sonido = rand() % 4 + 1;
+   return sonido;
+}
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+// Función para reproducir la secuencia de sonidos
+ void reproducirSecuencia(unsigned int secuencia[], unsigned int longitud) {
+    unsigned int i;
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
+    for (i = 0; i < longitud; i++) {
+        sonido = secuencia[i];
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+        // Reproduce el sonido
+        switch (sonido) {
+            case 1:
+               reproducir_DO();  //DO
+                break;
+            case 2:
+                reproducir_RE();    //RE
+                break;
+            case 3:
+               reproducir_MI();     //MI
+                break;
+            case 4:
+               reproducir_FA();     //FA
+                break;
+        }
+
+        // Enciende el LED correspondiente
+        switch (sonido) {
+            case 1:
+                LED1 = 1;
+                break;
+            case 2:
+                LED2 = 1;
+                break;
+            case 3:
+                LED3 = 1;
+                break;
+            case 4:
+                LED4 = 1;
+                break;
+        }
+
+        Delay_ms(500); // Espera medio segundo entre cada sonido
+
+        // Apaga todos los LEDs
+        LED1 = 0;
+        LED2 = 0;
+        LED3 = 0;
+        LED4 = 0;
+
+        Delay_ms(500); // Espera medio segundo antes de reproducir el siguiente sonido
+    }
+
+  //  return 0;
+}
+
+  // Variables para el modo juego
+    unsigned int secuencia[8]; // Secuencia de sonidos generada por el PIC
+    unsigned int longitudSecuencia = 4; // Longitud inicial de la secuencia
+    unsigned int i;
+    unsigned int j;
+    unsigned int sonidoElegido;
+    unsigned int sonidoReproducido[4];
+
+//inicio del modo juego
+void secuenciaInicio() {
+          reproducir_DO();
+          reproducir_RE();
+          reproducir_MI ();
+          reproducir_FA () ;
+}
+// Matriz de secuencia con errores
+unsigned int secuenciaError[4] = {DO, DO, DO, DO};
+// Función principal
+void main() {
+    // Configuración de puertos y pines
+    ANSEL  = 0;                                    // Configure AN pins as digital I/O
+    ANSELH = 0;
+    TRISB = 0b00011111; // Los primeros 5 pines de RB son entradas
+    TRISC = 0b00000000; // Todos los pines de RC son salidas
+    PORTB = 0b00000000; // Limpia el puerto B
+    PORTC = 0b00000000; // Limpia el puerto C
+ 
+ 
+ // Configuración para los timer
+  T0CS_bit=0;   //corre el reloj interno
+  PSA_bit=0;    //prescaler del timer 0
+  PS2_bit=0;    //prescaler del segundo
+  PS1_bit=0;
+  PS0_bit=0;
+
+  T2CON=0;
+  T2CKPS1_bit=0;
+  T2CKPS0_bit=0;
+  PR2=255;
+
+ Sound_Init(&PORTC,4);
+
+  /*// Variables para el modo juego
+    unsigned int secuencia[8]; // Secuencia de sonidos generada por el PIC
+    unsigned int longitudSecuencia = 4; // Longitud inicial de la secuencia
+    unsigned int i;
+    unsigned int sonidoElegido;
+    unsigned int sonidoReproducido;*/
+
+
+    while (1) {
+                                   ///
+        // Modo Piano
+        if (Button(&PORTB,0,1,1)) {
+             reproducir_DO ()         ;            //
+        } else if (Button(&PORTB,1,1,1)) {
+           reproducir_RE     ()      ;
+        } else if (Button(&PORTB,2,1,1)) {
+            reproducir_MI      ()   ;
+        } else if (Button(&PORTB,3,1,1)) {
+           reproducir_FA         ();
+        }
+
+ // Modo Juego
+        if (Button(&PORTB,4,1,1)) {
+            secuenciaInicio ();           //bien
+            
+            
+             // Genera la secuencia de sonidos aleatorios
+            for (i = 0; i < longitudSecuencia; i++) {
+                secuencia[i] = obtenerSonidoAleatorio();          // funcion para obtener el sonido aleatorio
+            }                                                           //      1 en 1
+                        
+            for (i = 0; i < longitudSecuencia; i++) {
+                secuencia[i] = obtenerSonidoAleatorio();
+                        
+                                                                 // funcion donde la perona elije
+            // Inicia el juego                                         //  2 en 2              primer sonido
+            for (i = 0; i < longitudSecuencia; i++) {
+                // El PIC reproduce la secuencia y espera por el sonido elegido
+              reproducirSecuencia(secuencia, i + 1);
+               
+               /*for (j=0; j<i; j++){
+                 reproducirSecuencia(secuencia[j], j + 1);
+                 reproducirSecuencia(sonidoReproducido[j], j + 1);
+                 }*/
+                 
+                Delay_ms(500);
+                sonidoElegido = 0;
+
+                // Espera hasta que se elija un sonido
+                //for (j=0; j<i; j++){
+                while (sonidoElegido == 0) {
+                   //reproducir_MI ();
+                    if (Button(&PORTB,0,1,1)) {
+                        sonidoElegido = 1;
+                        sonidoReproducido[i] = 1;
+                        reproducir_DO ();
+                    } else if (Button(&PORTB,1,1,1)) {
+                        sonidoElegido = 1;
+                        sonidoReproducido[i] = 2;
+                        reproducir_RE ();
+                    } else if (Button(&PORTB,2,1,1)) {
+                        sonidoElegido = 1;
+                        sonidoReproducido[i] = 3;
+                        reproducir_MI ();
+                    } else if (Button(&PORTB,3,1,1)) {
+                        sonidoElegido = 1;
+                        sonidoReproducido[i] = 4;
+                        reproducir_FA ();
+                    }
+                }
+
+                // Verifica si el sonido elegido coincide con la secuencia
+                if (sonidoReproducido[i] != secuencia[i]) {
+                    // Error en la secuencia, el PIC gana
+                    // sound_play(1000,2000);
+                  //  unsigned int secuenciaError[] = {DO, DO, DO, DO};
+                      reproducir_DO ();
+                      reproducir_DO ();
+                      reproducir_DO ();
+                      reproducir_DO ();
+                    break;
+                }
+               } // del for para el while
+                
+                
+                // Verifica si se ha alcanzado la longitud máxima de la secuencia
+                if (i == longitudSecuencia - 1) {
+                    // La secuencia es correcta, el jugador gana
+                    encenderLEDs();
+
+                    // Reinicia el juego
+                    longitudSecuencia = 4;
+                    break;
+                }
+            } // del for
+        } ///modo juego
+    }  ///while 1
+}                 ///main
